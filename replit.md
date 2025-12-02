@@ -10,8 +10,9 @@ The application follows a monorepo structure with a React + TypeScript frontend 
 
 **✅ Fully Functional**
 - Local development: Complete and working perfectly
+- Vercel deployment: Ready (requires environment variables)
 - Windows-compatible: Uses `cross-env` for npm scripts
-- Hardcoded Admin: `Fatahstammy@gmail.com` / `696233`
+- Admin credentials: Configurable via environment variables
 - Mobile-optimized with WhatsApp-style bottom navigation
 
 ## How to Run
@@ -141,18 +142,12 @@ When no database is available, displays 3 pre-configured gadget listings:
 
 ## Deployment Notes
 
-### Local Development (Recommended)
+### Local Development
 ```bash
 npm run dev
 # Runs on http://localhost:5000
 # All features work, including file uploads and database fallback
 ```
-
-### Vercel Deployment Issue
-- Code is production-ready and builds successfully
-- Vercel deployments currently experiencing 401 authentication page issues
-- Appears to be account/project configuration issue (not code-related)
-- Recommendation: Verify Vercel project settings or create fresh Vercel project with different name
 
 ### Production Build
 ```bash
@@ -163,32 +158,46 @@ npm run build
 
 ## Environment Variables
 
-- `DATABASE_URL`: Optional Neon PostgreSQL connection string
-- `SESSION_SECRET`: Session encryption key (defaults to 'dev-secret-key')
-- `NODE_ENV`: Environment flag (development/production)
-- `VERCEL_TOKEN`: For Vercel deployments (CI/CD)
+**Required for Vercel Production:**
+- `ADMIN_EMAIL`: Admin login email (required in production)
+- `ADMIN_PASSWORD`: Admin login password (required in production)
+- `SESSION_SECRET`: Session encryption key (required for security)
+- `DATABASE_URL`: Neon PostgreSQL connection string (optional, uses memory fallback)
+
+**Development defaults (only used locally):**
+- Admin email: `Fatahstammy@gmail.com`
+- Admin password: `696233`
+- Session secret: auto-generated fallback
 
 ## Recent Changes (Dec 2, 2025)
 
 - ✅ Added Windows compatibility with `cross-env`
 - ✅ Implemented memory fallback for session store and file uploads
-- ✅ Hardcoded admin credentials for no-database operation
-- ✅ Fixed middleware ordering for Express app
-- ✅ Cleaned up Vercel configuration issues
-- ✅ Optimized production build export for Vercel
+- ✅ Created vercel.json for serverless function routing
+- ✅ Created api/index.ts as Vercel serverless entry point
+- ✅ Moved admin credentials to environment variables
+- ✅ Fixed session cookie settings for production (secure, sameSite)
+- ✅ Added trust proxy for Vercel reverse proxy
 - ✅ All local features verified working
 
-## Known Issues
+## Vercel Deployment
 
-1. **Vercel Deployment 401 Error**: All deployments return 401 "Authentication Required" page before reaching Express app
-   - Appears to be Vercel project configuration, not code issue
-   - Local development works perfectly
-   - Workaround: Run locally with `npm run dev`
+### Setup Steps:
+1. Connect your GitHub repo to Vercel
+2. Set environment variables in Vercel dashboard:
+   - `ADMIN_EMAIL` - your admin email
+   - `ADMIN_PASSWORD` - your admin password
+   - `SESSION_SECRET` - a strong random string
+   - `DATABASE_URL` - (optional) Neon PostgreSQL connection string
+3. Deploy
+
+### Configuration Files:
+- `vercel.json` - Routes API calls to serverless functions, serves static assets
+- `api/index.ts` - Serverless function entry point with all API routes
 
 ## Next Steps (For Future)
 
-1. Investigate Vercel project settings for deployment protection or restrictions
-2. Consider deploying to alternative platform (Render, Railway, AWS)
-3. Implement email notifications for submissions
-4. Add payment processing integration (Paystack/Flutterwave)
-5. Add cloud storage for file uploads (Cloudinary/S3)
+1. Implement email notifications for submissions
+2. Add payment processing integration (Paystack/Flutterwave)
+3. Add cloud storage for file uploads (Cloudinary/S3)
+4. Add user registration when database is available
