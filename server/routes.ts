@@ -42,10 +42,11 @@ const upload = multer({
   },
 });
 
-// Hardcoded admin credentials for development
-const ADMIN_EMAIL = "Fatahstammy@gmail.com";
-const ADMIN_PASSWORD = "696233";
-const ADMIN_PASSWORD_HASH = crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex");
+// Admin credentials from environment variables (required in production)
+const isProduction = process.env.NODE_ENV === 'production';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || (isProduction ? '' : "Fatahstammy@gmail.com");
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (isProduction ? '' : "696233");
+const ADMIN_PASSWORD_HASH = ADMIN_PASSWORD ? crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex") : '';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth Routes

@@ -3,6 +3,11 @@ import express from 'express';
 import session from 'express-session';
 import crypto from 'crypto';
 import memorystore from 'memorystore';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import { eq, desc, or } from 'drizzle-orm';
+
+neonConfig.fetchConnectionCache = true;
 
 const app = express();
 
@@ -26,9 +31,10 @@ app.use(session({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const ADMIN_EMAIL = "Fatahstammy@gmail.com";
-const ADMIN_PASSWORD = "696233";
-const ADMIN_PASSWORD_HASH = crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex");
+const isProduction = process.env.NODE_ENV === 'production';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+const ADMIN_PASSWORD_HASH = ADMIN_PASSWORD ? crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex") : '';
 
 declare module 'express-session' {
   interface SessionData {
@@ -36,6 +42,9 @@ declare module 'express-session' {
     isAdmin: boolean;
   }
 }
+
+const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
+const db = pool ? drizzle(pool) : null;
 
 app.post("/api/auth/register", async (_req, res) => {
   return res.status(503).json({ error: "Registration temporarily unavailable. Please try logging in instead." });
@@ -48,7 +57,7 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password required" });
     }
 
-    if (email === ADMIN_EMAIL) {
+    if (ADMIN_EMAIL && ADMIN_PASSWORD_HASH && email === ADMIN_EMAIL) {
       const hash = crypto.createHash("sha256").update(password).digest("hex");
       if (hash === ADMIN_PASSWORD_HASH) {
         req.session.userId = "admin-user-id";
