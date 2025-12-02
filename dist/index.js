@@ -136,40 +136,57 @@ var insertMessageSchema = z.object({
 
 // server/storage.ts
 import { eq, desc, or } from "drizzle-orm";
-neonConfig.webSocketConstructor = ws;
-var pool = new Pool({ connectionString: process.env.DATABASE_URL });
-var db = drizzle(pool);
+if (typeof globalThis.WebSocket === "undefined") {
+  neonConfig.webSocketConstructor = ws;
+}
+neonConfig.fetchConnectionCache = true;
+var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
+var db = pool ? drizzle(pool) : null;
 var DbStorage = class {
+  ensureDb() {
+    if (!db) {
+      throw new Error("Database not configured");
+    }
+    return db;
+  }
   // Users
   async createUser(email, username, passwordHash, isAdmin = false) {
-    const [result] = await db.insert(users).values({ email, username, passwordHash, isAdmin }).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(users).values({ email, username, passwordHash, isAdmin }).returning();
     return result;
   }
   async getUserByEmail(email) {
-    const [result] = await db.select().from(users).where(eq(users.email, email));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(users).where(eq(users.email, email));
     return result;
   }
   async getUserByUsername(username) {
-    const [result] = await db.select().from(users).where(eq(users.username, username));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(users).where(eq(users.username, username));
     return result;
   }
   async getUserById(id) {
-    const [result] = await db.select().from(users).where(eq(users.id, id));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(users).where(eq(users.id, id));
     return result;
   }
   // Messages
   async createMessage(senderId, senderUsername, messageText, isAdminMessage, recipientId) {
-    const [result] = await db.insert(messages).values({ senderId, senderUsername, messageText, isAdminMessage, recipientId }).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(messages).values({ senderId, senderUsername, messageText, isAdminMessage, recipientId }).returning();
     return result;
   }
   async getMessages() {
-    return db.select().from(messages).orderBy(desc(messages.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(messages).orderBy(desc(messages.createdAt));
   }
   async getMessagesBySender(senderId) {
-    return db.select().from(messages).where(eq(messages.senderId, senderId)).orderBy(desc(messages.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(messages).where(eq(messages.senderId, senderId)).orderBy(desc(messages.createdAt));
   }
   async getMessagesForUser(userId) {
-    return db.select().from(messages).where(
+    const database = this.ensureDb();
+    return database.select().from(messages).where(
       or(
         eq(messages.senderId, userId),
         eq(messages.recipientId, userId)
@@ -178,92 +195,110 @@ var DbStorage = class {
   }
   // Gift Cards
   async createGiftCardSubmission(data) {
-    const [result] = await db.insert(giftCardSubmissions).values(data).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(giftCardSubmissions).values(data).returning();
     return result;
   }
   async getGiftCardSubmissions() {
-    return db.select().from(giftCardSubmissions).orderBy(desc(giftCardSubmissions.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(giftCardSubmissions).orderBy(desc(giftCardSubmissions.createdAt));
   }
   async getGiftCardSubmission(id) {
-    const [result] = await db.select().from(giftCardSubmissions).where(eq(giftCardSubmissions.id, id));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(giftCardSubmissions).where(eq(giftCardSubmissions.id, id));
     return result;
   }
   async updateGiftCardStatus(id, status, rejectionReason) {
+    const database = this.ensureDb();
     const updateData = { status };
     if (rejectionReason !== void 0) {
       updateData.rejectionReason = rejectionReason;
     }
-    const [result] = await db.update(giftCardSubmissions).set(updateData).where(eq(giftCardSubmissions.id, id)).returning();
+    const [result] = await database.update(giftCardSubmissions).set(updateData).where(eq(giftCardSubmissions.id, id)).returning();
     return result;
   }
   // Crypto Trades
   async createCryptoTrade(data) {
-    const [result] = await db.insert(cryptoTrades).values(data).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(cryptoTrades).values(data).returning();
     return result;
   }
   async getCryptoTrades() {
-    return db.select().from(cryptoTrades).orderBy(desc(cryptoTrades.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(cryptoTrades).orderBy(desc(cryptoTrades.createdAt));
   }
   async getCryptoTrade(id) {
-    const [result] = await db.select().from(cryptoTrades).where(eq(cryptoTrades.id, id));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(cryptoTrades).where(eq(cryptoTrades.id, id));
     return result;
   }
   async updateCryptoTradeStatus(id, status, rejectionReason) {
+    const database = this.ensureDb();
     const updateData = { status };
     if (rejectionReason !== void 0) {
       updateData.rejectionReason = rejectionReason;
     }
-    const [result] = await db.update(cryptoTrades).set(updateData).where(eq(cryptoTrades.id, id)).returning();
+    const [result] = await database.update(cryptoTrades).set(updateData).where(eq(cryptoTrades.id, id)).returning();
     return result;
   }
   // Gadget Submissions
   async createGadgetSubmission(data) {
-    const [result] = await db.insert(gadgetSubmissions).values(data).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(gadgetSubmissions).values(data).returning();
     return result;
   }
   async getGadgetSubmissions() {
-    return db.select().from(gadgetSubmissions).orderBy(desc(gadgetSubmissions.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(gadgetSubmissions).orderBy(desc(gadgetSubmissions.createdAt));
   }
   async getGadgetSubmission(id) {
-    const [result] = await db.select().from(gadgetSubmissions).where(eq(gadgetSubmissions.id, id));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(gadgetSubmissions).where(eq(gadgetSubmissions.id, id));
     return result;
   }
   async updateGadgetSubmissionStatus(id, status, rejectionReason) {
+    const database = this.ensureDb();
     const updateData = { status };
     if (rejectionReason !== void 0) {
       updateData.rejectionReason = rejectionReason;
     }
-    const [result] = await db.update(gadgetSubmissions).set(updateData).where(eq(gadgetSubmissions.id, id)).returning();
+    const [result] = await database.update(gadgetSubmissions).set(updateData).where(eq(gadgetSubmissions.id, id)).returning();
     return result;
   }
   // Gadgets (Products)
   async createGadget(data) {
-    const [result] = await db.insert(gadgets).values(data).returning();
+    const database = this.ensureDb();
+    const [result] = await database.insert(gadgets).values(data).returning();
     return result;
   }
   async getGadgets() {
-    return db.select().from(gadgets).orderBy(desc(gadgets.createdAt));
+    const database = this.ensureDb();
+    return database.select().from(gadgets).orderBy(desc(gadgets.createdAt));
   }
   async getGadget(id) {
-    const [result] = await db.select().from(gadgets).where(eq(gadgets.id, id));
+    const database = this.ensureDb();
+    const [result] = await database.select().from(gadgets).where(eq(gadgets.id, id));
     return result;
   }
   async updateGadget(id, data) {
-    const [result] = await db.update(gadgets).set(data).where(eq(gadgets.id, id)).returning();
+    const database = this.ensureDb();
+    const [result] = await database.update(gadgets).set(data).where(eq(gadgets.id, id)).returning();
     return result;
   }
   // Exchange Rates
   async createOrUpdateExchangeRate(data) {
+    const database = this.ensureDb();
     const existing = await this.getCurrentExchangeRates();
     if (existing) {
-      const [result2] = await db.update(exchangeRates).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(exchangeRates.id, existing.id)).returning();
+      const [result2] = await database.update(exchangeRates).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(exchangeRates.id, existing.id)).returning();
       return result2;
     }
-    const [result] = await db.insert(exchangeRates).values(data).returning();
+    const [result] = await database.insert(exchangeRates).values(data).returning();
     return result;
   }
   async getCurrentExchangeRates() {
-    const [result] = await db.select().from(exchangeRates).orderBy(desc(exchangeRates.updatedAt)).limit(1);
+    const database = this.ensureDb();
+    const [result] = await database.select().from(exchangeRates).orderBy(desc(exchangeRates.updatedAt)).limit(1);
     return result;
   }
 };
@@ -304,9 +339,10 @@ var upload = multer({
     cb(new Error("Only image files are allowed"));
   }
 });
-var ADMIN_EMAIL = "Fatahstammy@gmail.com";
-var ADMIN_PASSWORD = "696233";
-var ADMIN_PASSWORD_HASH = crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex");
+var isProduction = process.env.NODE_ENV === "production";
+var ADMIN_EMAIL = process.env.ADMIN_EMAIL || (isProduction ? "" : "Fatahstammy@gmail.com");
+var ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (isProduction ? "" : "696233");
+var ADMIN_PASSWORD_HASH = ADMIN_PASSWORD ? crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex") : "";
 async function registerRoutes(app2) {
   app2.post("/api/auth/register", async (req, res) => {
     try {
@@ -811,12 +847,19 @@ if (process.env.DATABASE_URL) {
   const MemoryStore = memorystore(session);
   sessionStore = new MemoryStore({ checkPeriod: 864e5 });
 }
+var isProduction2 = process.env.NODE_ENV === "production";
+app.set("trust proxy", 1);
 app.use(session({
   store: sessionStore,
-  secret: process.env.SESSION_SECRET || "dev-secret-key",
+  secret: process.env.SESSION_SECRET || "platform-trade-secret-key-2024",
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1e3, httpOnly: true }
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1e3,
+    httpOnly: true,
+    secure: isProduction2,
+    sameSite: isProduction2 ? "none" : "lax"
+  }
 }));
 app.use(express.json({
   verify: (req, _res, buf) => {
