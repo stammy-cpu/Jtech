@@ -53,12 +53,21 @@ if (process.env.DATABASE_URL) {
   sessionStore = new MemoryStore({ checkPeriod: 86400000 });
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.set('trust proxy', 1);
+
 app.use(session({
   store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'dev-secret-key',
+  secret: process.env.SESSION_SECRET || 'platform-trade-secret-key-2024',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true },
+  cookie: { 
+    maxAge: 30 * 24 * 60 * 60 * 1000, 
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+  },
 }));
 
 app.use(express.json({
