@@ -10,7 +10,7 @@ async function initAdmin() {
     }
 
     const passwordHash = crypto.createHash("sha256").update("@21Savage").digest("hex");
-    const admin = await storage.createUser("fatahstammy@gmail.com", passwordHash, true);
+    const admin = await storage.createUser("fatahstammy@gmail.com", "Admin", passwordHash, true);
     console.log("Admin user created:", admin.email);
     process.exit(0);
   } catch (error) {
