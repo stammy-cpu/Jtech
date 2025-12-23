@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/hero_workspace_background.png";
-import { Shield, Clock, Users, Gift, Bitcoin, Smartphone, CheckCircle, ArrowRight, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { Shield, Clock, Users, Gift, Bitcoin, Smartphone, CheckCircle, ArrowRight, TrendingUp, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import ExchangeRates from "@/components/ExchangeRates";
 import { useQuery } from "@tanstack/react-query";
