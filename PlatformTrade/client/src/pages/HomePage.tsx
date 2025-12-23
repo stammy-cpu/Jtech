@@ -2,13 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/hero_workspace_background.png";
-import { Shield, Clock, Users, Gift, Bitcoin, Smartphone, CheckCircle, ArrowRight, Sparkles, TrendingUp, Zap, Star } from "lucide-react";
+import { Shield, Clock, Users, Gift, Bitcoin, Smartphone, CheckCircle, ArrowRight, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import ExchangeRates from "@/components/ExchangeRates";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import type { Gadget } from "@shared/schema";
 
 function Hero() {
+  const { user } = useAuth();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -26,15 +28,6 @@ function Hero() {
       opacity: 1,
       y: 0,
       transition: { duration: 0.8, ease: "easeOut" },
-    },
-  };
-
-  const floatingAnimation = {
-    y: [0, -15, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut",
     },
   };
 
@@ -87,17 +80,6 @@ function Hero() {
         initial="hidden"
         animate="visible"
       >
-        <motion.div variants={itemVariants}>
-          <motion.div
-            animate={floatingAnimation}
-            className="inline-block mb-6"
-          >
-            <div className="p-4 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full backdrop-blur-sm inline-block">
-              <Sparkles className="w-12 h-12 text-primary" />
-            </div>
-          </motion.div>
-        </motion.div>
-
         <motion.h1 
           className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6" 
           variants={itemVariants}
@@ -123,19 +105,39 @@ function Hero() {
         </motion.p>
         
         <motion.div className="flex flex-col sm:flex-row gap-4 justify-center mb-12" variants={itemVariants}>
-          <Link href="/gift-cards">
-            <Button size="lg" className="text-lg px-8 bg-gradient-to-r from-primary to-blue-600 border-blue-700" data-testid="button-hero-get-started" asChild>
-              <span className="flex items-center gap-2">
-                Start Trading Now
-                <ArrowRight className="w-5 h-5" />
-              </span>
-            </Button>
-          </Link>
-          <Link href="/gadgets">
-            <Button size="lg" variant="outline" className="text-lg px-8 border-2 backdrop-blur-sm bg-background/50" data-testid="button-hero-browse-gadgets" asChild>
-              <span>Browse Gadgets</span>
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              <Link href="/gift-cards">
+                <Button size="lg" className="text-lg px-8 bg-gradient-to-r from-primary to-blue-600 border-blue-700" data-testid="button-hero-get-started" asChild>
+                  <span className="flex items-center gap-2">
+                    Start Trading Now
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Button>
+              </Link>
+              <Link href="/gadgets">
+                <Button size="lg" variant="outline" className="text-lg px-8 border-2 backdrop-blur-sm bg-background/50" data-testid="button-hero-browse-gadgets" asChild>
+                  <span>Browse Gadgets</span>
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/register">
+                <Button size="lg" className="text-lg px-8 bg-gradient-to-r from-primary to-blue-600 border-blue-700" data-testid="button-hero-get-started" asChild>
+                  <span className="flex items-center gap-2">
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="text-lg px-8 border-2 backdrop-blur-sm bg-background/50" data-testid="button-hero-login" asChild>
+                  <span>Sign In</span>
+                </Button>
+              </Link>
+            </>
+          )}
         </motion.div>
 
         <motion.div className="flex flex-wrap gap-6 justify-center items-center" variants={itemVariants}>
@@ -229,7 +231,7 @@ export default function HomePage() {
     select: (data) => data
       .filter(g => g.available)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 4),
+      .slice(0, 3),
   });
 
   const services = [
@@ -325,14 +327,11 @@ export default function HomePage() {
             className="flex flex-col md:flex-row items-center justify-between gap-6 mb-16"
           >
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Star className="w-7 h-7 text-primary" />
-                <h2 className="text-3xl md:text-4xl font-bold" data-testid="text-featured-title">
-                  Featured <span className="text-primary">Gadgets</span>
-                </h2>
-              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2" data-testid="text-featured-title">
+                Premium <span className="text-primary">Gadgets</span>
+              </h2>
               <p className="text-lg text-muted-foreground" data-testid="text-featured-subtitle">
-                Premium devices at unbeatable prices
+                Handpicked devices at unbeatable prices
               </p>
             </div>
             <Link href="/gadgets">
@@ -346,7 +345,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
