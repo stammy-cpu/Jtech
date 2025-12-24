@@ -328,10 +328,10 @@ export default function HomePage() {
           >
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-2" data-testid="text-featured-title">
-                Premium <span className="text-primary">Gadgets</span>
+                Featured <span className="text-primary">Gadgets</span>
               </h2>
               <p className="text-lg text-muted-foreground" data-testid="text-featured-subtitle">
-                Handpicked devices at unbeatable prices
+                Explore our latest collection of premium electronics and appliances
               </p>
             </div>
             <Link href="/gadgets">
@@ -345,77 +345,90 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {featuredGadgets.length > 0 ? (
-              featuredGadgets.map((gadget, index) => (
+            {[
+              {
+                id: '1',
+                name: 'Premium Smartphone',
+                condition: 'Brand New',
+                price: 299000,
+                image: '/assets/phone_product.jpg'
+              },
+              {
+                id: '2',
+                name: 'Laptop Computer',
+                condition: 'Like New',
+                price: 599000,
+                image: '/assets/laptop_product.jpg'
+              },
+              {
+                id: '3',
+                name: 'Hisense Smart TV',
+                condition: 'Brand New',
+                price: 159000,
+                image: '/assets/tv_product.jpg'
+              },
+              {
+                id: '4',
+                name: 'Air Conditioning Unit',
+                condition: 'Brand New',
+                price: 249000,
+                image: '/assets/ac_product.jpg'
+              }
+            ].map((gadget, index) => (
+              <motion.div
+                key={gadget.id}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    transition: { duration: 0.6, delay: index * 0.1 },
+                  },
+                }}
+              >
                 <motion.div
-                  key={gadget.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 30 },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      transition: { duration: 0.6, delay: index * 0.1 },
-                    },
-                  }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full cursor-pointer"
                 >
-                  <Link href={`/gadgets/${gadget.id}`}>
-                    <motion.div
-                      whileHover={{ y: -8, scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
-                      className="h-full cursor-pointer"
-                    >
-                      <Card className="hover-elevate h-full flex flex-col overflow-hidden group border-primary/20" data-testid={`card-gadget-${gadget.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                        <div className="relative h-56 bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
-                          <img 
-                            src={gadget.imageUrls[0]} 
-                            alt={gadget.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                          <div className="absolute top-3 right-3">
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white shadow-lg">
-                              Available
-                            </span>
-                          </div>
-                        </div>
-                        <CardContent className="p-6 space-y-3 flex-1 flex flex-col justify-between">
-                          <div>
-                            <p className="font-bold text-xl mb-2" data-testid={`text-gadget-name-${gadget.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                              {gadget.name}
-                            </p>
-                            <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white" data-testid={`text-gadget-condition-${gadget.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                              {gadget.condition}
-                            </span>
-                          </div>
-                          <div className="pt-4 border-t border-border/50">
-                            <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent" data-testid={`text-gadget-price-${gadget.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                              ₦{gadget.price.toLocaleString()}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </Link>
+                  <Card className="hover-elevate h-full flex flex-col overflow-hidden group border-primary/20">
+                    <div className="relative h-48 bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
+                      <img 
+                        src={gadget.image} 
+                        alt={gadget.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white shadow-lg">
+                          Available
+                        </span>
+                      </div>
+                    </div>
+                    <CardContent className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <p className="font-bold text-lg mb-2">
+                          {gadget.name}
+                        </p>
+                        <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                          {gadget.condition}
+                        </span>
+                      </div>
+                      <div className="pt-4 border-t border-border/50">
+                        <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          ₦{gadget.price.toLocaleString()}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-16">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Smartphone className="w-20 h-20 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-lg text-muted-foreground">No featured gadgets available at the moment</p>
-                  <p className="text-sm text-muted-foreground mt-2">Check back soon for amazing deals!</p>
-                </motion.div>
-              </div>
-            )}
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </section>
