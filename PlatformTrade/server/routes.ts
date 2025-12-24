@@ -27,34 +27,32 @@ const upload = multer({
   },
 });
 
-// Hardcoded users
-const HARDCODED_USERS = {
-  admin: {
-    id: "1",
-    email: "fatahstammy@gmail.com",
-    password: "@21Savage",
-    username: "Admin",
-    isAdmin: true,
-  },
-  normalUser: {
-    id: "2",
-    email: "goke@stammy.org",
-    password: "@21Savage",
-    username: "Goke",
-    isAdmin: false,
-  },
-};
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password required" });
+      const { email, username, password } = req.body;
+      if (!email || !username || !password) {
+        return res.status(400).json({ error: "Email, username and password required" });
       }
 
-      return res.status(403).json({ error: "Registration disabled. Use existing credentials." });
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+
+      const hash = crypto.createHash("sha256").update(password).digest("hex");
+      const user = await storage.createUser(email, username, hash, false);
+
+      req.session.userId = user.id;
+      req.session.isAdmin = user.isAdmin;
+
+      res.json({ id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -67,16 +65,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email and password required" });
       }
 
-      let user = Object.values(HARDCODED_USERS).find(u => u.email === email);
-      
-      if (!user || user.password !== password) {
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const hash = crypto.createHash("sha256").update(password).digest("hex");
+      if (hash !== user.passwordHash) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
       req.session.userId = user.id;
       req.session.isAdmin = user.isAdmin;
       
-      res.json({ id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin });
+      res.json({ id: user.id, email: user.email, username: user.username || "Admin", isAdmin: user.isAdmin });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -88,12 +90,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const user = Object.values(HARDCODED_USERS).find(u => u.id === req.session.userId);
+      const user = await storage.getUserById(req.session.userId);
       if (!user) {
         return res.status(401).json({ error: "User not found" });
       }
 
-      res.json({ id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin });
+      res.json({ id: user.id, email: user.email, username: user.username || "User", isAdmin: user.isAdmin });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

@@ -47,7 +47,7 @@ function ProtectedAdminRoute({ component: Component }: { component: () => JSX.El
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
+      <Route path="/" component={LandingPage} />
       <Route path="/home" component={HomePage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegistrationPage} />

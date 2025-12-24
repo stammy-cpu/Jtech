@@ -1,0 +1,119 @@
+I’m looking for a developer to help me build a website for my business JTECH Trading World.
+
+For now, the website will focus on 3 main services:
+	1.	Gift card trading
+	2.	Small crypto buying & selling (not a full exchange)
+	3.	Gadgets buying & selling (phones, laptops, etc.)
+
+I want a clean, professional site where customers can:
+	•	Submit gift card details with images
+	•	Submit crypto transactions and see my wallet address
+	•	Upload gadget pictures for trade-in or request a price
+	•	Contact me easily through WhatsApp chat
+	•	Make payments using Paystack/Flutterwave
+	•	View available gadgets (or request if not available)
+
+The site should be mobile-friendly, simple, and affordable to build. WordPress is fine.
+
+If this is something you can handle, please let me know your price, timeline, and what you need from me to get started.
+
+Thank you.
+1. Website Goals (Phase 1)
+	•	Build trust (money + gadgets involved).
+	•	Make it extremely easy for customers to:
+	•	Sell gift cards
+	•	Buy or sell crypto
+	•	Buy or sell gadgets
+	•	Allow fast communication via WhatsApp or live chat.
+	•	Allow customers to pay using Visa/Mastercard if needed.
+	•	Simple backend for me to receive all requests.
+Gift Card Trading Page
+
+Features:
+	•	Select card type (Amazon, iTunes, Google Play, Steam, etc.)
+	•	Select card region
+	•	Enter amount
+	•	Upload card images or enter the code
+	•	Enter bank or wallet details for payment
+	•	Submit form
+
+What happens after submission:
+	•	I get an email notification
+	•	User sees message:
+“Your gift card has been submitted. Please wait for verification.”
+
+Optional (if dev can do it):
+	•	Admin dashboard to mark “Pending → Verified → Paid”.
+c) Crypto Trading Page
+
+I am NOT building a real exchange.
+Just allow customers to buy or sell crypto through me.
+
+Sell Crypto to JTECH:
+	•	Show supported coins: Bitcoin, USDT, etc.
+	•	Show wallet addresses or QR code
+	•	User fills form:
+	•	Coin type
+	•	Amount they sent
+	•	Transaction hash
+	•	Bank details for payout
+	•	I receive notification and pay manually after confirming.
+
+Buy Crypto from JTECH:
+	•	Small form:
+	•	Coin they want
+	•	Amount
+	•	Payment method (bank transfer or card)
+	•	I manually complete the trade.
+
+d) Gadgets Buying & Selling Page
+
+(Phones, laptops, PlayStation, and other electronics)
+
+Selling Gadgets to JTECH (Trade-in):
+Users can:
+	•	Select device type
+	•	Enter brand & model
+	•	Upload pictures (front, back, receipt if they have)
+	•	Describe condition
+	•	Enter payment details
+	•	Submit
+
+I receive it, check the details, send them a quote, and pay once approved.
+
+Buying Gadgets From JTECH:
+	•	Display available gadgets with pictures & prices
+	•	Or if product list is not ready yet:
+	•	“Request a Gadget” form
+	•	“Ask for a Price” form
+
+e) Card Payment / Checkout Page (Optional but recommended)
+
+Let users:
+	•	Buy crypto
+	•	Buy gadgets
+	•	Pay for orders
+
+Developer should integrate one payment gateway such as:
+	•	Paystack
+	•	Flutterwave
+	•	(Stripe ONLY if you want USD international payments later)
+
+
+STRIPE IS IMPORTANT 
+
+🔵 3. Design Requirements
+	•	Clean and modern
+	•	Fast and mobile-friendly
+	•	Colours: Developer can choose (or blue/white, dark/gold)
+	•	Logo can be simple (you can ask me to create one for free)
+
+4. Backend Requirements
+
+You (the developer) must ensure that:
+	•	All forms send email notifications to admin
+	•	Admin can view all requests in a simple dashboard (if possible)
+	•	Website is easy for me to update
+	•	Payment gateway works correctly
+	•	WhatsApp chat works on all pages
+

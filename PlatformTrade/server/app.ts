@@ -7,9 +7,10 @@ import express, {
   NextFunction,
 } from "express";
 import session from "express-session";
-import MemoryStore from "memorystore";
+import ConnectPgSimple from "connect-pg-simple";
 
 import { registerRoutes } from "./routes";
+import { Pool } from "@neondatabase/serverless";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -30,12 +31,14 @@ declare module 'http' {
   }
 }
 
-const store = new (MemoryStore(session))({
-  checkPeriod: 86400000,
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+const PgSession = ConnectPgSimple(session);
 
 app.use(session({
-  store,
+  store: new PgSession({
+    pool,
+    tableName: 'session',
+  }),
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
   resave: false,
   saveUninitialized: false,
