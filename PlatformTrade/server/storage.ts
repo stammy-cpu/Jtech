@@ -1,14 +1,4 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { neonConfig, Pool } from "@neondatabase/serverless";
-import ws from "ws";
 import {
-  giftCardSubmissions,
-  cryptoTrades,
-  gadgetSubmissions,
-  gadgets,
-  users,
-  messages,
-  exchangeRates,
   type InsertGiftCard,
   type GiftCard,
   type InsertCryptoTrade,
@@ -22,227 +12,183 @@ import {
   type InsertExchangeRate,
   type ExchangeRate,
 } from "@shared/schema";
-import { eq, desc, or } from "drizzle-orm";
-
-neonConfig.webSocketConstructor = ws;
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
-const db = drizzle(pool);
 
 export interface IStorage {
-  // Users
   createUser(email: string, username: string, passwordHash: string, isAdmin?: boolean): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
-
-  // Messages
   createMessage(senderId: string, senderUsername: string, messageText: string, isAdminMessage: boolean, recipientId?: string): Promise<Message>;
   getMessages(): Promise<Message[]>;
   getMessagesBySender(senderId: string): Promise<Message[]>;
   getMessagesForUser(userId: string): Promise<Message[]>;
-
-  // Gift Cards
   createGiftCardSubmission(data: InsertGiftCard): Promise<GiftCard>;
   getGiftCardSubmissions(): Promise<GiftCard[]>;
   getGiftCardSubmission(id: string): Promise<GiftCard | undefined>;
   updateGiftCardStatus(id: string, status: string, rejectionReason?: string): Promise<GiftCard | undefined>;
-
-  // Crypto Trades
   createCryptoTrade(data: InsertCryptoTrade): Promise<CryptoTrade>;
   getCryptoTrades(): Promise<CryptoTrade[]>;
   getCryptoTrade(id: string): Promise<CryptoTrade | undefined>;
   updateCryptoTradeStatus(id: string, status: string, rejectionReason?: string): Promise<CryptoTrade | undefined>;
-
-  // Gadget Submissions
   createGadgetSubmission(data: InsertGadgetSubmission): Promise<GadgetSubmission>;
   getGadgetSubmissions(): Promise<GadgetSubmission[]>;
   getGadgetSubmission(id: string): Promise<GadgetSubmission | undefined>;
   updateGadgetSubmissionStatus(id: string, status: string, rejectionReason?: string): Promise<GadgetSubmission | undefined>;
-
-  // Gadgets (Products)
   createGadget(data: InsertGadget): Promise<Gadget>;
   getGadgets(): Promise<Gadget[]>;
   getGadget(id: string): Promise<Gadget | undefined>;
   updateGadget(id: string, data: Partial<InsertGadget>): Promise<Gadget | undefined>;
-
-  // Exchange Rates
   createOrUpdateExchangeRate(data: InsertExchangeRate): Promise<ExchangeRate>;
   getCurrentExchangeRates(): Promise<ExchangeRate | undefined>;
 }
 
-export class DbStorage implements IStorage {
-  // Users
+class MemoryStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private messages: Message[] = [];
+  private giftCards: Map<string, GiftCard> = new Map();
+  private cryptoTrades: Map<string, CryptoTrade> = new Map();
+  private gadgetSubmissions: Map<string, GadgetSubmission> = new Map();
+  private gadgets: Map<string, Gadget> = new Map();
+  private exchangeRates: ExchangeRate | undefined = undefined;
+
   async createUser(email: string, username: string, passwordHash: string, isAdmin = false): Promise<User> {
-    const [result] = await db.insert(users).values({ email, username, passwordHash, isAdmin }).returning();
-    return result;
+    const user: User = { id: Math.random().toString(), email, username, passwordHash, isAdmin, createdAt: new Date() };
+    this.users.set(user.id, user);
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [result] = await db.select().from(users).where(eq(users.email, email));
-    return result;
+    for (const user of Array.from(this.users.values())) {
+      if (user.email === email) return user;
+    }
+    return undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [result] = await db.select().from(users).where(eq(users.username, username));
-    return result;
+    for (const user of Array.from(this.users.values())) {
+      if (user.username === username) return user;
+    }
+    return undefined;
   }
 
   async getUserById(id: string): Promise<User | undefined> {
-    const [result] = await db.select().from(users).where(eq(users.id, id));
-    return result;
+    return this.users.get(id);
   }
 
-  // Messages
   async createMessage(senderId: string, senderUsername: string, messageText: string, isAdminMessage: boolean, recipientId?: string): Promise<Message> {
-    const [result] = await db.insert(messages).values({ senderId, senderUsername, messageText, isAdminMessage, recipientId }).returning();
-    return result;
+    const message: Message = { id: Math.random().toString(), senderId, senderUsername, messageText, isAdminMessage, recipientId, createdAt: new Date() };
+    this.messages.push(message);
+    return message;
   }
 
   async getMessages(): Promise<Message[]> {
-    return db.select().from(messages).orderBy(desc(messages.createdAt));
+    return [...this.messages].reverse();
   }
 
   async getMessagesBySender(senderId: string): Promise<Message[]> {
-    return db.select().from(messages).where(eq(messages.senderId, senderId)).orderBy(desc(messages.createdAt));
+    return this.messages.filter(m => m.senderId === senderId).reverse();
   }
 
   async getMessagesForUser(userId: string): Promise<Message[]> {
-    return db.select().from(messages).where(
-      or(
-        eq(messages.senderId, userId),
-        eq(messages.recipientId, userId)
-      )
-    ).orderBy(messages.createdAt);
+    return this.messages.filter(m => m.senderId === userId || m.recipientId === userId);
   }
 
-  // Gift Cards
   async createGiftCardSubmission(data: InsertGiftCard): Promise<GiftCard> {
-    const [result] = await db.insert(giftCardSubmissions).values(data).returning();
-    return result;
+    const giftCard: GiftCard = { id: Math.random().toString(), ...data as any, createdAt: new Date(), status: "pending", rejectionReason: null };
+    this.giftCards.set(giftCard.id, giftCard);
+    return giftCard;
   }
 
   async getGiftCardSubmissions(): Promise<GiftCard[]> {
-    return db.select().from(giftCardSubmissions).orderBy(desc(giftCardSubmissions.createdAt));
+    return Array.from(this.giftCards.values()).reverse();
   }
 
   async getGiftCardSubmission(id: string): Promise<GiftCard | undefined> {
-    const [result] = await db.select().from(giftCardSubmissions).where(eq(giftCardSubmissions.id, id));
-    return result;
+    return this.giftCards.get(id);
   }
 
   async updateGiftCardStatus(id: string, status: string, rejectionReason?: string): Promise<GiftCard | undefined> {
-    const updateData: any = { status };
-    if (rejectionReason !== undefined) {
-      updateData.rejectionReason = rejectionReason;
-    }
-    const [result] = await db
-      .update(giftCardSubmissions)
-      .set(updateData)
-      .where(eq(giftCardSubmissions.id, id))
-      .returning();
-    return result;
+    const giftCard = this.giftCards.get(id);
+    if (!giftCard) return undefined;
+    giftCard.status = status;
+    if (rejectionReason) giftCard.rejectionReason = rejectionReason;
+    return giftCard;
   }
 
-  // Crypto Trades
   async createCryptoTrade(data: InsertCryptoTrade): Promise<CryptoTrade> {
-    const [result] = await db.insert(cryptoTrades).values(data).returning();
-    return result;
+    const trade: CryptoTrade = { id: Math.random().toString(), ...data as any, createdAt: new Date(), status: "pending", rejectionReason: null };
+    this.cryptoTrades.set(trade.id, trade);
+    return trade;
   }
 
   async getCryptoTrades(): Promise<CryptoTrade[]> {
-    return db.select().from(cryptoTrades).orderBy(desc(cryptoTrades.createdAt));
+    return Array.from(this.cryptoTrades.values()).reverse();
   }
 
   async getCryptoTrade(id: string): Promise<CryptoTrade | undefined> {
-    const [result] = await db.select().from(cryptoTrades).where(eq(cryptoTrades.id, id));
-    return result;
+    return this.cryptoTrades.get(id);
   }
 
   async updateCryptoTradeStatus(id: string, status: string, rejectionReason?: string): Promise<CryptoTrade | undefined> {
-    const updateData: any = { status };
-    if (rejectionReason !== undefined) {
-      updateData.rejectionReason = rejectionReason;
-    }
-    const [result] = await db
-      .update(cryptoTrades)
-      .set(updateData)
-      .where(eq(cryptoTrades.id, id))
-      .returning();
-    return result;
+    const trade = this.cryptoTrades.get(id);
+    if (!trade) return undefined;
+    trade.status = status;
+    if (rejectionReason) trade.rejectionReason = rejectionReason;
+    return trade;
   }
 
-  // Gadget Submissions
   async createGadgetSubmission(data: InsertGadgetSubmission): Promise<GadgetSubmission> {
-    const [result] = await db.insert(gadgetSubmissions).values(data).returning();
-    return result;
+    const submission: GadgetSubmission = { id: Math.random().toString(), ...data as any, createdAt: new Date(), status: "pending", rejectionReason: null };
+    this.gadgetSubmissions.set(submission.id, submission);
+    return submission;
   }
 
   async getGadgetSubmissions(): Promise<GadgetSubmission[]> {
-    return db.select().from(gadgetSubmissions).orderBy(desc(gadgetSubmissions.createdAt));
+    return Array.from(this.gadgetSubmissions.values()).reverse();
   }
 
   async getGadgetSubmission(id: string): Promise<GadgetSubmission | undefined> {
-    const [result] = await db.select().from(gadgetSubmissions).where(eq(gadgetSubmissions.id, id));
-    return result;
+    return this.gadgetSubmissions.get(id);
   }
 
   async updateGadgetSubmissionStatus(id: string, status: string, rejectionReason?: string): Promise<GadgetSubmission | undefined> {
-    const updateData: any = { status };
-    if (rejectionReason !== undefined) {
-      updateData.rejectionReason = rejectionReason;
-    }
-    const [result] = await db
-      .update(gadgetSubmissions)
-      .set(updateData)
-      .where(eq(gadgetSubmissions.id, id))
-      .returning();
-    return result;
+    const submission = this.gadgetSubmissions.get(id);
+    if (!submission) return undefined;
+    submission.status = status;
+    if (rejectionReason) submission.rejectionReason = rejectionReason;
+    return submission;
   }
 
-  // Gadgets (Products)
   async createGadget(data: InsertGadget): Promise<Gadget> {
-    const [result] = await db.insert(gadgets).values(data).returning();
-    return result;
+    const gadget: Gadget = { id: Math.random().toString(), ...data as any, createdAt: new Date(), available: true };
+    this.gadgets.set(gadget.id, gadget);
+    return gadget;
   }
 
   async getGadgets(): Promise<Gadget[]> {
-    return db.select().from(gadgets).orderBy(desc(gadgets.createdAt));
+    return Array.from(this.gadgets.values()).reverse();
   }
 
   async getGadget(id: string): Promise<Gadget | undefined> {
-    const [result] = await db.select().from(gadgets).where(eq(gadgets.id, id));
-    return result;
+    return this.gadgets.get(id);
   }
 
   async updateGadget(id: string, data: Partial<InsertGadget>): Promise<Gadget | undefined> {
-    const [result] = await db
-      .update(gadgets)
-      .set(data)
-      .where(eq(gadgets.id, id))
-      .returning();
-    return result;
+    const gadget = this.gadgets.get(id);
+    if (!gadget) return undefined;
+    Object.assign(gadget, data);
+    return gadget;
   }
 
-  // Exchange Rates
   async createOrUpdateExchangeRate(data: InsertExchangeRate): Promise<ExchangeRate> {
-    const existing = await this.getCurrentExchangeRates();
-    if (existing) {
-      const [result] = await db
-        .update(exchangeRates)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(exchangeRates.id, existing.id))
-        .returning();
-      return result;
-    }
-    const [result] = await db.insert(exchangeRates).values(data).returning();
-    return result;
+    const rate: ExchangeRate = { id: "1", ...data, updatedAt: new Date() };
+    this.exchangeRates = rate;
+    return rate;
   }
 
   async getCurrentExchangeRates(): Promise<ExchangeRate | undefined> {
-    const [result] = await db.select().from(exchangeRates).orderBy(desc(exchangeRates.updatedAt)).limit(1);
-    return result;
+    return this.exchangeRates;
   }
 }
 
-export const storage = new DbStorage();
+export const storage = new MemoryStorage();
